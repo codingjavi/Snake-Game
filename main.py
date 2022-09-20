@@ -217,6 +217,34 @@ class snake(object):
                 #calling the draw1 method in the cube class(actually draws the rectangle)
                 c.draw1(surface)
 
+    def addCube(self):
+        #finding out where the last cube of the body is(-1 gives us last)
+            #self.body becuase in the snake class
+                #s.body if outside class
+        tail = self.body[-1]
+        #setting tails direction from dirnx and dirny from self.dirnx FROM MOVE method
+            #getting dirnx and dirny form __init__
+        dx = tail.dirnx
+        dy = tail.dirny
+
+    #checking which direction we're moving(dx, dy)
+        #if adding it to the right,left, above, below of the tail(cube) 
+            #AND    giving it the correct directions 
+        #if dx(tails dirnx) == 1 and dy(tails dirny)
+        if dx == 1 and dy == 0:
+            #adding a new CUBE object which takes in start(which is x,y)
+                #cube taking in the x of tail.pos -1(we put in pos)
+            self.body.append(cube((tail.pos[0]-1,tail.pos[1])))
+        elif dx == -1 and dy == 0:
+            self.body.append(cube((tail.pos[0]+1,tail.pos[1])))
+        elif dx == 0 and dy == 1:
+            self.body.append(cube((tail.pos[0],tail.pos[1]-1)))
+        elif dx == 0 and dy == -1:
+            self.body.append(cube((tail.pos[0],tail.pos[1]+1)))
+ 
+        self.body[-1].dirnx = dx
+        self.body[-1].dirny = dy
+
  
 def drawGrid(w, rows, surface):
     #gap between each line, using // to not get any decimal numbers bc draw line method won't take it
@@ -235,12 +263,13 @@ def drawGrid(w, rows, surface):
         pygame.draw.line(surface, (255, 255, 255), (0, y), (w, y))
 
 def redrawWindow(surface):
-    global rows, width, s
+    global rows, width, s, snack
     #fill black in black screen
     surface.fill((0,0,0))
     
     #calls the draw function in the snake class (which calls the draw1 method in the cube class)
     s.draw(surface)
+    snack.draw1(surface)
     
     #drawing a grid with this functions
     drawGrid(width, rows, surface)
@@ -249,9 +278,46 @@ def redrawWindow(surface):
     #update game window bc there's been change
     pygame.display.update()
 
+#item is the snake object
+def randomSnack(rows, item):
+    
+    #positions is new list
+    positions = item.body
+
+    #LOOPING THRU EVERY POSITION IN THIS LIST and checking it against x and y
+        #if its the SAME then LOOP AGAIN, if not then BREAK LOOP
+    #chooses a random spot to put the snack in 
+    while True:
+        x = random.randrange(rows)
+        y = random.randrange(rows)
+        #getting a list of a filtered list
+            #and checking if any of the positions are equal to snakes current position
+                #make sure it doesn't spawn a cube on top of the snake
+                    #if this function zed positions == to the random position we generated
+        if len(list(filter(lambda z:z.pos == (x,y), positions))) > 0:
+            #gonna have to do it again
+            continue
+        else:
+            break
+    return (x,y)
+
+#showing message when lost
+def message_box(subject, content):
+    root = tk.Tk()
+    root.attributes("-topmost", True)
+    root.withdraw()
+    messagebox.showinfo(subject, content)
+    try:
+        root.destroy()
+    except:
+        pass
+
+
+
+
 #runs game
 def main():
-    global rows, width, s
+    global rows, width, s, snack
     rows = 20
     width = 500
     #making a screen, width, width because its a square
@@ -260,7 +326,13 @@ def main():
     #using the snake class to make it red and put it at (10, 10)
         #these parameters are going to the cube class(in the snake class)
     s = snake((250, 0, 0), (10, 10))
-    
+
+
+    #creating the snake object
+        #giving it position from randomSnack function
+            #takes in rows and intem(snake object)
+                #making it green
+    snack = cube(randomSnack(rows, s), color=((0,255,0)))
     
     #built in, helps slow down game
     clock = pygame.time.Clock()
@@ -278,7 +350,26 @@ def main():
         #calling the moving method in the snake class
         s.move()
 
+        #checking to see if the head of snake hit a snack
+        #s.body because from the snake class and .pos(parameter we gave to snake class) to get its position
+            #snack.pos from self.pos = start from cube class
+        if s.body[0].pos == snack.pos:
+            #calling new snake class method
+            s.addCube()
+            #making a new snack
+            snack = cube(randomSnack(rows, s), color=((0,255,0)))
         
+        #going through body list 
+        for x in range(len(s.body)):
+            #if an object in the body list is in this list 
+            if s.body[x].pos in list(map(lambda z:z.pos,s.body[x+1:])):
+                #score is length of body
+                print('Score:' , len(s.body))
+                message_box('You Lost!, Play again..')
+                s.reset((10,10))
+                #break out of loop
+                break
+
         #looking for events and quit
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
