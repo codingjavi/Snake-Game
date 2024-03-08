@@ -1,3 +1,7 @@
 # Snake Game
 
-Further immersed myself in python by creating a snake game with pygame.
+Further immersed myself in Python by creating an OOP snake game.
+
+## Processes and Technologies
+- Created classes for a snake and the cubes
+- Utilized Pygame
